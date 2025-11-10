@@ -11,7 +11,7 @@
  $c_user          = count_by_id('users');
  $products_sold   = find_higest_saleing_product('10');
  $recent_products = find_recent_product_added('5');
- $recent_sales    = find_recent_sale_added('5')
+ $recent_sales    = find_recent_sale_added('5');
 ?>
 <?php include_once('layouts/header.php'); ?>
 
@@ -122,7 +122,9 @@
            <td class="text-center"><?php echo count_id();?></td>
            <td>
             <a href="edit_sale.php?id=<?php echo (int)$recent_sale['id']; ?>">
-             <?php echo remove_junk(first_character($recent_sale['name'])); ?>
+
+<?php echo isset($recent_sale['name']) ? remove_junk(first_character($recent_sale['name'])) : 'Producto eliminado'; ?>
+             
            </a>
            </td>
            <td><?php echo remove_junk(ucfirst($recent_sale['date'])); ?></td>
@@ -168,7 +170,6 @@
   </div>
  </div>
 </div>
- </div>
   <div class="row">
 
   </div>
