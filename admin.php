@@ -85,7 +85,7 @@
             <thead>
                <tr>
                  <th>Título</th>
-                 <th>Total vendido</th>
+                 <th>variaciones vendidas</th>
                  <th>Cantidad total</th>
                </tr>
             </thead>
@@ -107,41 +107,54 @@
 
 
    <!-- ÚLTIMAS VENTAS -->
-   <div class="col-md-4">
-     <div class="panel panel-default">
-       <div class="panel-heading">
-         <strong><span class="glyphicon glyphicon-th"></span> ÚLTIMAS VENTAS</strong>
-       </div>
-       <div class="panel-body">
-         <table class="table table-striped table-bordered table-condensed">
-           <thead>
-             <tr>
-               <th class="text-center" style="width: 50px;">#</th>
-               <th>Producto</th>
-               <th>Fecha</th>
-               <th>Venta total</th>
-             </tr>
-           </thead>
-           <tbody>
-             <?php foreach ($recent_sales as $recent_sale): ?>
-               <tr>
-                 <td class="text-center"><?php echo count_id(); ?></td>
+<div class="col-md-4">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <strong><span class="glyphicon glyphicon-th"></span> ÚLTIMAS VENTAS</strong>
+    </div>
+    <div class="panel-body">
+      <table class="table table-striped table-bordered table-condensed">
+        <thead>
+          <tr>
+            <th class="text-center" style="width: 50px;">#</th>
+            <th>Producto - Tipo</th>
+            <th>Categoría</th>
+            <th>Fecha</th>
+            <th>Total de Venta</th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($recent_sales as $recent_sale): ?>
+          <tr>
+            <td class="text-center"><?php echo count_id(); ?></td>
 
-                 <td>
-                   <a href="edit_sale.php?id=<?php echo (int)$recent_sale['id']; ?>">
-                     <?php echo isset($recent_sale['name']) && $recent_sale['name'] !== null ? remove_junk(first_character($recent_sale['name'])) : '<em>Producto eliminado</em>'; ?>
-                   </a>
-                 </td>
+            <td>
+              <a href="edit_sale.php?id=<?php echo (int)$recent_sale['id']; ?>">
+                <?php echo isset($recent_sale['product_name']) && $recent_sale['product_name'] !== null 
+                  ? remove_junk(first_character($recent_sale['product_name']))
+                  : '<em>Producto eliminado</em>'; ?>
+              </a>
+            </td>
 
-                 <td><?php echo remove_junk($recent_sale['date'] ?? ''); ?></td>
-                 <td>$<?php echo remove_junk($recent_sale['price'] ?? 0); ?></td>
-               </tr>
-             <?php endforeach; ?>
-           </tbody>
-         </table>
-       </div>
-     </div>
-   </div>
+            <td>
+              <?php echo remove_junk($recent_sale['category_name'] ?? 'Sin categoría'); ?>
+            </td>
+
+            <td>
+              <?php echo remove_junk($recent_sale['date'] ?? '-'); ?>
+            </td>
+
+            <td>
+              $<?php echo remove_junk(number_format($recent_sale['total_sale'] ?? 0, 0, '', '.')); ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 
 
    <!-- PRODUCTOS RECIENTES -->
@@ -154,24 +167,19 @@
          <div class="list-group">
            <?php foreach ($recent_products as $recent_product): ?>
              <a class="list-group-item clearfix" href="edit_product.php?id=<?php echo (int)$recent_product['id']; ?>">
+              <h4 class="list-group-item-heading">
+              <?php
+                if (!isset($recent_product['media_id']) || $recent_product['media_id'] == 0):?>
+                <img class="img-avatar img-circle" src="uploads/products/no_image.jpg" alt="">
+              <?php else: ?>
+                  <img class="img-avatar img-circle" src="uploads/products/<?php echo $recent_product['image'] ?? 'no_image.jpg'; ?>" alt="">
+              <?php endif; ?>
+              <?php echo remove_junk(first_character(($recent_product['brand'] ?? 'Sin marca') . " " . ($recent_product['model'] ?? 'Sin modelo'))); ?>
 
-                <h4 class="list-group-item-heading">
-                  <?php
-                    // Revisar media_id vacío
-                    if (!isset($recent_product['media_id']) || $recent_product['media_id'] == 0):
-                  ?>
-                      <img class="img-avatar img-circle" src="uploads/products/no_image.jpg" alt="">
-                  <?php else: ?>
-                      <img class="img-avatar img-circle" src="uploads/products/<?php echo $recent_product['image'] ?? 'no_image.jpg'; ?>" alt="">
-                  <?php endif; ?>
-
-                  <?php echo remove_junk(first_character($recent_product['name'] ?? 'Sin nombre')); ?>
-
-                  <span class="label label-warning pull-right">
-                    $<?php echo (int)$recent_product['sale_price']; ?>
-                  </span>
+              <span class="label label-warning pull-right">
+                $<?php echo (int)$recent_product['sale_price']; ?>
+              </span>
                 </h4>
-
                 <span class="list-group-item-text pull-right">
                     <?php echo remove_junk(first_character($recent_product['categorie'] ?? 'Sin categoría')); ?>
                 </span>

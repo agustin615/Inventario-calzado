@@ -102,9 +102,11 @@ function read_date($str){
 /*--------------------------------------------------------------*/
 /* Function for  Readable Make date time
 /*--------------------------------------------------------------*/
-function make_date(){
-  return strftime("%Y-%m-%d %H:%M:%S", time());
+function make_date() {
+    date_default_timezone_set('America/Santiago');
+    return date("Y-m-d H:i:s");
 }
+
 /*--------------------------------------------------------------*/
 /* Function for  Readable date time
 /*--------------------------------------------------------------*/
@@ -124,13 +126,5 @@ function randString($length = 5)
    $str .= $cha[mt_rand(0,strlen($cha))];
   return $str;
 }
-
-
-
-
-
-
-
-
 
 ?>
