@@ -9,7 +9,7 @@
  $c_product       = count_by_id('products');
  $c_sale          = count_by_id('sales');
  $c_user          = count_by_id('users');
- $products_sold   = find_higest_saleing_product('10');
+ $products_sold   = find_higest_saleing_product('5');
  $recent_products = find_recent_product_added('5');
  $recent_sales    = find_recent_sale_added('5');
 ?>
@@ -73,61 +73,63 @@
     </div>
 </div>
 
+
 <div class="row">
-   <!-- PRODUCTOS MÁS VENDIDOS -->
-   <div class="col-md-4">
-     <div class="panel panel-default">
-       <div class="panel-heading">
-         <strong><span class="glyphicon glyphicon-th"></span> Productos más vendidos</strong>
-       </div>
-       <div class="panel-body">
-         <table class="table table-striped table-bordered table-condensed">
-            <thead>
-               <tr>
-                 <th>Título</th>
-                 <th>variaciones vendidas</th>
-                 <th>Cantidad total</th>
-               </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($products_sold as $product_sold): ?>
-                <tr>
-                  <td>
-                    <?php echo isset($product_sold['name']) ? remove_junk(first_character($product_sold['name'])) : 'Producto sin nombre'; ?>
-                  </td>
-                  <td><?php echo (int)$product_sold['totalSold']; ?></td>
-                  <td><?php echo (int)$product_sold['totalQty']; ?></td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-         </table>
-       </div>
-     </div>
-   </div>
+  <!-- PRODUCTOS MÁS VENDIDOS -->
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <strong><span class="glyphicon glyphicon-th"></span> Productos más vendidos</strong>
+      </div>
+      <div class="panel-body">
+        <table class="table table-striped table-bordered table-condensed">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Variaciones vendidas</th>
+              <th>Cantidad total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($products_sold as $product_sold): ?>
+              <tr>
+                <td><?php echo isset($product_sold['name']) ? remove_junk(first_character($product_sold['name'])) : 'Producto sin nombre'; ?></td>
+                <td><?php echo remove_junk(first_character($product_sold['categorie'] ?? 'Sin categoría')); ?></td>
+                <td class="text-center"><?php echo (int)$product_sold['totalSold']; ?></td>
+                <td class="text-center"><?php echo (int)$product_sold['totalQty']; ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 
-   <!-- ÚLTIMAS VENTAS -->
+
+  <!-- ÚLTIMAS VENTAS -->
 <div class="col-md-4">
   <div class="panel panel-default">
     <div class="panel-heading">
-      <strong><span class="glyphicon glyphicon-th"></span> ÚLTIMAS VENTAS</strong>
+      <strong><span class="glyphicon glyphicon-th"></span> ÚLTIMAS 5 VENTAS</strong>
     </div>
     <div class="panel-body">
-      <table class="table table-striped table-bordered table-condensed">
+      <table class="table table-striped table-bordered table-condensed" style="table-layout: fixed; width: 100%;">
         <thead>
           <tr>
-            <th class="text-center" style="width: 50px;">#</th>
-            <th>Producto - Tipo</th>
-            <th>Categoría</th>
-            <th>Fecha</th>
-            <th>Total de Venta</th>
+            <th class="text-center" style="width: 8%;">#</th>
+            <th style="width: 25%;">Producto - Tipo</th>
+            <th style="width: 20%;">Categoría</th>
+            <th style="width: 27%;">Fecha y hora de la venta</th>
+            <th style="width: 20%;">Total de Venta</th>
           </tr>
         </thead>
         <tbody>
         <?php foreach ($recent_sales as $recent_sale): ?>
           <tr>
             <td class="text-center"><?php echo count_id(); ?></td>
-
             <td>
               <a href="edit_sale.php?id=<?php echo (int)$recent_sale['id']; ?>">
                 <?php echo isset($recent_sale['product_name']) && $recent_sale['product_name'] !== null 
@@ -135,18 +137,9 @@
                   : '<em>Producto eliminado</em>'; ?>
               </a>
             </td>
-
-            <td>
-              <?php echo remove_junk($recent_sale['category_name'] ?? 'Sin categoría'); ?>
-            </td>
-
-            <td>
-              <?php echo remove_junk($recent_sale['date'] ?? '-'); ?>
-            </td>
-
-            <td>
-              $<?php echo remove_junk(number_format($recent_sale['total_sale'] ?? 0, 0, '', '.')); ?>
-            </td>
+            <td><?php echo remove_junk($recent_sale['category_name'] ?? 'Sin categoría'); ?></td>
+            <td><?php echo remove_junk($recent_sale['date'] ?? '-'); ?></td>
+            <td>$<?php echo remove_junk(number_format($recent_sale['total_sale'] ?? 0, 0, '', '.')); ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>
@@ -157,11 +150,12 @@
 
 
 
+
    <!-- PRODUCTOS RECIENTES -->
    <div class="col-md-4">
      <div class="panel panel-default">
        <div class="panel-heading">
-         <strong><span class="glyphicon glyphicon-th"></span> Productos recientemente añadidos</strong>
+         <strong><span class="glyphicon glyphicon-th"></span> Los  ultimos 5 Productos recientemente añadidos</strong>
        </div>
        <div class="panel-body">
          <div class="list-group">

@@ -284,16 +284,19 @@ function find_recent_product_added($limit){
  /*--------------------------------------------------------------*/
 function find_higest_saleing_product($limit){
    global $db;
-   $sql  = "SELECT CONCAT(p.brand, ' ', p.model) AS name,";
-   $sql .= " COUNT(s.product_id) AS totalSold,";
-   $sql .= " SUM(s.qty) AS totalQty";
-   $sql .= " FROM sales s";
-   $sql .= " LEFT JOIN products p ON p.id = s.product_id";
-   $sql .= " GROUP BY p.brand, p.model";
-   $sql .= " ORDER BY SUM(s.qty) DESC";
-   $sql .= " LIMIT ".$db->escape((int)$limit);
+   $sql  = "SELECT CONCAT(p.brand, ' ', p.model) AS name, ";
+   $sql .= "c.name AS categorie, ";
+   $sql .= "COUNT(s.product_id) AS totalSold, ";
+   $sql .= "SUM(s.qty) AS totalQty ";
+   $sql .= "FROM sales s ";
+   $sql .= "LEFT JOIN products p ON p.id = s.product_id ";
+   $sql .= "LEFT JOIN categories c ON c.id = p.categorie_id ";
+   $sql .= "GROUP BY p.id, c.name ";
+   $sql .= "ORDER BY SUM(s.qty) DESC ";
+   $sql .= "LIMIT ".$db->escape((int)$limit);
    return $db->query($sql);
 }
+
 
  /*--------------------------------------------------------------*/
  /* Function for find all sales
