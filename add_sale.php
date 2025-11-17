@@ -3,7 +3,11 @@ $page_title = 'Agregar venta';
 require_once('includes/load.php');
 page_require_level(3);
 
-// Obtener todos los productos con sus variantes y categoría
+if (!isset($_SESSION['carrito'])) {
+  $_SESSION['carrito'] = [];
+}
+
+// Obtener productos
 $sql  = "SELECT p.id AS product_id, p.brand, p.model, p.sale_price, ";
 $sql .= "c.name AS categorie, ";
 $sql .= "v.id AS variant_id, v.color, v.size, v.stock ";
@@ -13,47 +17,92 @@ $sql .= "LEFT JOIN product_variants v ON p.id = v.product_id ";
 $sql .= "ORDER BY p.brand, p.model";
 $products = find_by_sql($sql);
 
-// Procesar venta
-if (isset($_POST['add_sale'])) {
-  $variant_id = (int)$db->escape($_POST['variant_id']);
-  $qty = (int)$db->escape($_POST['quantity']);
-  $price = (float)$db->escape($_POST['price']);
+/* =====================================================
+    AGREGAR PRODUCTO AL CARRITO
+   ===================================================== */
+if (isset($_POST['add_to_cart'])) {
+
+  $variant_id = (int)$_POST['variant_id'];
+  $qty = (int)$_POST['quantity'];
+  $price = (float)$_POST['price'];
+
+  $variant = find_by_id('product_variants', $variant_id);
+
+  if (!$variant || $variant['stock'] < $qty) {
+    $session->msg("d", "No hay suficiente stock disponible.");
+    redirect('add_sale.php');
+  }
+
+  // Si ya existe en el carrito, se suma
+  if (isset($_SESSION['carrito'][$variant_id])) {
+    $_SESSION['carrito'][$variant_id]['qty'] += $qty;
+  } else {
+    $_SESSION['carrito'][$variant_id] = [
+      "product_id" => $variant['product_id'],
+      "variant_id" => $variant_id,
+      "qty"        => $qty,
+      "price"      => $price
+    ];
+  }
+
+  $session->msg("s", "Producto agregado al carrito");
+  redirect('add_sale.php');
+}
+
+/* =====================================================
+    FINALIZAR VENTA
+   ===================================================== */
+
+if (isset($_POST['finalizar_venta'])) {
+
+  if (empty($_SESSION['carrito'])) {
+    $session->msg("d", "No hay productos en el carrito.");
+    redirect('add_sale.php');
+  }
+
   $date = make_date();
 
-  if ($qty <= 0) {
-    $session->msg('d', "La cantidad debe ser mayor que 0");
-    redirect('add_sale.php', false);
-  }
+  // Crear venta
+  $sql = "INSERT INTO sales (date) VALUES ('{$date}')";
+  if ($db->query($sql)) {
 
-  // Verificar stock disponible
-  $variant = find_by_id('product_variants', $variant_id);
-  if ($variant && $variant['stock'] >= $qty) {
-    $product_id = (int)$variant['product_id'];
+    $venta_id = $db->insert_id();
 
-    // Insertar venta
-    $sql  = "INSERT INTO sales (product_id, variant_id, qty, price, date) ";
-    $sql .= "VALUES ('{$product_id}', '{$variant_id}', '{$qty}', '{$price}', '{$date}')";
-    if ($db->query($sql)) {
-      // Actualizar stock
+    // Insertar detalle y descontar stock
+    foreach ($_SESSION['carrito'] as $item) {
+
+      $p_id = $item['product_id'];
+      $v_id = $item['variant_id'];
+      $qty  = $item['qty'];
+      $price = $item['price'];
+
+      // Insertar detalle_venta
+      $sql_det = "INSERT INTO detalle_venta (venta_id, producto_id, variant_id, cantidad, precio_unitario)
+                  VALUES ('{$venta_id}', '{$p_id}', '{$v_id}', '{$qty}', '{$price}')";
+      $db->query($sql_det);
+
+      // Descontar stock
+      $variant = find_by_id('product_variants', $v_id);
       $new_stock = $variant['stock'] - $qty;
-      $update_stock = "UPDATE product_variants SET stock = '{$new_stock}' WHERE id = '{$variant_id}'";
-      $db->query($update_stock);
 
-      $session->msg('s', "Venta agregada correctamente");
-      redirect('add_sale.php', false);
-    } else {
-      $session->msg('d', "No se pudo registrar la venta");
-      redirect('add_sale.php', false);
+      $sql_stock = "UPDATE product_variants SET stock = '{$new_stock}' WHERE id = '{$v_id}'";
+      $db->query($sql_stock);
     }
+
+    // Limpiar carrito
+    $_SESSION['carrito'] = [];
+
+    $session->msg("s", "Venta registrada correctamente");
+    redirect('sales.php');
+
   } else {
-    $session->msg('d', "No hay suficiente stock disponible");
-    redirect('add_sale.php', false);
+    $session->msg("d", "Error al registrar la venta.");
+    redirect('add_sale.php');
   }
 }
+
+include_once('layouts/header.php');
 ?>
-
-<?php include_once('layouts/header.php'); ?>
-
 <div class="row">
   <div class="col-md-12">
     <?php echo display_msg($msg); ?>
@@ -61,55 +110,107 @@ if (isset($_POST['add_sale'])) {
 </div>
 
 <div class="row">
-  <div class="col-md-12">
+  <div class="col-md-8">
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
-        <strong><span class="glyphicon glyphicon-th"></span> <span>Agregar venta</span></strong>
+        <strong><span class="glyphicon glyphicon-th"></span> Productos</strong>
       </div>
       <div class="panel-body">
+
         <table class="table table-bordered">
           <thead>
             <tr>
-              <th class="text-center" style="width: 50px;">#</th>
-              <th>Marca</th>
-              <th>Modelo</th>
-              <th>Categoría</th>
-              <th class="text-center">Color</th>
-              <th class="text-center">Talla</th>
-              <th class="text-center">Stock disponible</th>
-              <th class="text-center">Precio</th>
-              <th class="text-center" style="width: 150px;">Cantidad a vender</th>
-              <th class="text-center" style="width: 100px;">Acción</th>
+              <th>#</th><th>Marca</th><th>Modelo</th><th>Categoría</th>
+              <th>Color</th><th>Talla</th><th>Stock</th><th>Precio</th>
+              <th>Cantidad</th><th>Agregar</th>
             </tr>
           </thead>
           <tbody>
-            <?php foreach ($products as $product): ?>
-              <tr>
-                <form method="post" action="add_sale.php">
-                  <td class="text-center"><?php echo count_id(); ?></td>
-                  <td><?php echo strtoupper(remove_junk($product['brand'])); ?></td>
-                  <td><?php echo strtoupper(remove_junk($product['model'])); ?></td>
-                  <td class="text-center"><?php echo strtoupper(remove_junk($product['categorie'])); ?></td>
-                  <td class="text-center"><?php echo strtoupper(remove_junk($product['color'])); ?></td>
-                  <td class="text-center"><?php echo strtoupper(remove_junk($product['size'])); ?></td>
-                  <td class="text-center"><?php echo (int)$product['stock']; ?></td>
-                  <td class="text-center">$<?php echo number_format($product['sale_price'], 0, '', '.'); ?></td>
-                  <td class="text-center">
-                    <input type="number" name="quantity" min="1" max="<?php echo (int)$product['stock']; ?>" class="form-control" style="width:80px; margin:auto;" required>
-                    <input type="hidden" name="variant_id" value="<?php echo (int)$product['variant_id']; ?>">
-                    <input type="hidden" name="price" value="<?php echo (float)$product['sale_price']; ?>">
-                  </td>
-                  <td class="text-center">
-                    <button type="submit" name="add_sale" class="btn btn-success btn-sm">Vender</button>
-                  </td>
-                </form>
-              </tr>
-            <?php endforeach; ?>
+
+          <?php foreach ($products as $product): ?>
+            <tr>
+              <form method="post">
+                <td><?php echo count_id(); ?></td>
+                <td><?php echo $product['brand']; ?></td>
+                <td><?php echo $product['model']; ?></td>
+                <td><?php echo $product['categorie']; ?></td>
+                <td><?php echo $product['color']; ?></td>
+                <td><?php echo $product['size']; ?></td>
+                <td><?php echo $product['stock']; ?></td>
+                <td>$<?php echo number_format($product['sale_price'],0,'','.'); ?></td>
+
+                <td>
+                  <input type="number" name="quantity" 
+                         min="1" max="<?php echo $product['stock']; ?>" 
+                         class="form-control" required>
+                </td>
+
+                <td>
+                  <input type="hidden" name="variant_id" value="<?php echo $product['variant_id']; ?>">
+                  <input type="hidden" name="price" value="<?php echo $product['sale_price']; ?>">
+                  <button name="add_to_cart" class="btn btn-primary btn-sm">Agregar</button>
+                </td>
+
+              </form>
+            </tr>
+          <?php endforeach; ?>
+
           </tbody>
         </table>
+
       </div>
     </div>
   </div>
-</div>
 
-<?php include_once('layouts/footer.php'); ?>
+  <!-- CARRITO -->
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <strong><span class="glyphicon glyphicon-shopping-cart"></span> Carrito</strong>
+      </div>
+      <div class="panel-body">
+
+        <?php if (empty($_SESSION['carrito'])): ?>
+          <p>No hay productos en el carrito.</p>
+        <?php else: ?>
+
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cant</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php
+            $total = 0;
+            foreach ($_SESSION['carrito'] as $item):
+              $p = find_by_id('products', $item['product_id']);
+              $subtotal = $item['qty'] * $item['price'];
+              $total += $subtotal;
+          ?>
+            <tr>
+              <td><?php echo $p['brand'] . " " . $p['model']; ?></td>
+              <td><?php echo $item['qty']; ?></td>
+              <td>$<?php echo number_format($subtotal, 0, '', '.'); ?></td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+
+        <h4>Total venta: <strong>$<?php echo number_format($total, 0, '', '.'); ?></strong></h4>
+
+        <form method="post">
+          <button name="finalizar_venta" class="btn btn-success btn-block">
+            Finalizar venta
+          </button>
+        </form>
+
+        <?php endif; ?>
+
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,28 +1,25 @@
 <?php
-  $page_title = 'Lista de ventas';
-  require_once('includes/load.php');
-  page_require_level(3);
+$page_title = 'Lista de ventas';
+require_once('includes/load.php');
+page_require_level(3);
 
-  // Consulta limpia: obtiene las ventas junto a sus productos y variantes
-  $sql = "
+// OBTENER TODAS LAS VENTAS CON SU TOTAL
+$sql = "
     SELECT 
-      s.id, 
-      s.qty, 
-      (s.qty * s.price) AS total, 
-      s.date,
-      p.brand, 
-      p.model, 
-      v.color, 
-      v.size
+        s.id AS venta_id,
+        s.date,
+        SUM(d.cantidad * d.precio_unitario) AS total,
+        COUNT(d.id) AS total_items
     FROM sales s
-    LEFT JOIN products p ON s.product_id = p.id
-    LEFT JOIN product_variants v ON s.variant_id = v.id
+    LEFT JOIN detalle_venta d ON s.id = d.venta_id
+    GROUP BY s.id
     ORDER BY s.date DESC
-  ";
-  $sales = find_by_sql($sql);
-?>
+";
 
-<?php include_once('layouts/header.php'); ?>
+$ventas = find_by_sql($sql);
+
+include_once('layouts/header.php');
+?>
 
 <div class="row">
   <div class="col-md-6">
@@ -34,7 +31,7 @@
   <div class="col-md-12">
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
-        <strong><span class="glyphicon glyphicon-th"></span> Todas las ventas</strong>
+        <strong><span class="glyphicon glyphicon-th"></span> Ventas registradas</strong>
         <div class="pull-right">
           <a href="add_sale.php" class="btn btn-primary">Agregar venta</a>
         </div>
@@ -44,54 +41,59 @@
         <table class="table table-bordered table-striped">
           <thead>
             <tr>
-              <th class="text-center" style="width: 50px;">#</th>
-              <th>Producto</th>
-              <th class="text-center">Cantidad</th>
+              <th class="text-center">#</th>
+              <th class="text-center">Productos</th>
               <th class="text-center">Total</th>
               <th class="text-center">Fecha</th>
-              <th class="text-center" style="width: 100px;">Acciones</th>
+              <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <?php if (empty($sales)): ?>
+
+            <?php if (empty($ventas)): ?>
               <tr>
-                <td colspan="6" class="text-center">No hay ventas registradas.</td>
+                <td colspan="5" class="text-center">No hay ventas registradas.</td>
               </tr>
             <?php else: ?>
-              <?php $i = 1; foreach ($sales as $sale): ?>
+              <?php $i = 1; foreach ($ventas as $v): ?>
                 <tr>
                   <td class="text-center"><?php echo $i++; ?></td>
-                  <td>
-                    <?php 
-                      echo strtoupper(remove_junk($sale['brand'] . ' ' . $sale['model']));
-                      if (!empty($sale['color']) || !empty($sale['size'])) {
-                        echo " — " . strtoupper(remove_junk($sale['color'])) . " / " . strtoupper(remove_junk($sale['size']));
-                      }
-                    ?>
+
+                  <td class="text-center">
+                    <?php echo $v['total_items']; ?> productos
                   </td>
-                  <td class="text-center"><?php echo (int)$sale['qty']; ?></td>
-                  <td class="text-center">$<?php echo number_format($sale['total'], 0, '', '.'); ?></td>
-                  <td class="text-center"><?php echo read_date($sale['date']); ?></td>
+
+                  <td class="text-center">
+                    $<?php echo number_format($v['total'], 0, '', '.'); ?>
+                  </td>
+
+                  <td class="text-center">
+                    <?php echo read_date($v['date']); ?>
+                  </td>
+
                   <td class="text-center">
                     <div class="btn-group">
-                      <a href="edit_sale.php?id=<?php echo (int)$sale['id'];?>" class="btn btn-warning btn-xs" title="Editar" data-toggle="tooltip">
-                        <span class="glyphicon glyphicon-edit"></span>
+                      <a href="view_sale.php?id=<?php echo (int)$v['venta_id']; ?>" 
+                        class="btn btn-info btn-xs" title="Ver">
+                        <span class="glyphicon glyphicon-eye-open"></span>
                       </a>
-                        <a href="delete_sale.php?id=<?php echo (int)$sale['id']; ?>" 
+
+                      <a href="delete_sale.php?id=<?php echo (int)$v['venta_id']; ?>" 
                         class="btn btn-danger btn-xs" 
-                        title="Eliminar" 
-                        data-toggle="tooltip"
-                        onclick="return confirm('¿Seguro que desea eliminar esta venta? Esto devolverá el stock al inventario.');">
+                        onclick="return confirm('¿Eliminar venta completa? Se restaurará el stock.');">
                         <span class="glyphicon glyphicon-trash"></span>
                       </a>
                     </div>
                   </td>
+
                 </tr>
               <?php endforeach; ?>
             <?php endif; ?>
+
           </tbody>
         </table>
       </div>
+
     </div>
   </div>
 </div>
