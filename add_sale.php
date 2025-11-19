@@ -3,11 +3,33 @@ $page_title = 'Agregar venta';
 require_once('includes/load.php');
 page_require_level(3);
 
+$edit_mode = false;
+$venta_id = 0;
+
+/* =====================================================
+    DETECTAR MODO EDICIÓN
+   ===================================================== */
+if (isset($_GET['edit'])) {
+  $edit_mode = true;
+  $venta_id = (int)$_GET['edit'];
+
+  $venta = find_by_id('sales', $venta_id);
+  if (!$venta) {
+    $session->msg("d", "La venta que intentas editar no existe.");
+    redirect('sales.php');
+  }
+}
+
+/* =====================================================
+    INICIALIZAR CARRITO SI NO EXISTE
+   ===================================================== */
 if (!isset($_SESSION['carrito'])) {
   $_SESSION['carrito'] = [];
 }
 
-// Obtener productos
+/* =====================================================
+    OBTENER PRODUCTOS Y VARIANTES
+   ===================================================== */
 $sql  = "SELECT p.id AS product_id, p.brand, p.model, p.sale_price, ";
 $sql .= "c.name AS categorie, ";
 $sql .= "v.id AS variant_id, v.color, v.size, v.stock ";
@@ -18,22 +40,41 @@ $sql .= "ORDER BY p.brand, p.model";
 $products = find_by_sql($sql);
 
 /* =====================================================
-    AGREGAR PRODUCTO AL CARRITO
+    AGREGAR PRODUCTO (NORMAL O EDIT MODE)
    ===================================================== */
 if (isset($_POST['add_to_cart'])) {
 
   $variant_id = (int)$_POST['variant_id'];
-  $qty = (int)$_POST['quantity'];
-  $price = (float)$_POST['price'];
+  $qty        = (int)$_POST['quantity'];
+  $price      = (float)$_POST['price'];
 
   $variant = find_by_id('product_variants', $variant_id);
 
   if (!$variant || $variant['stock'] < $qty) {
     $session->msg("d", "No hay suficiente stock disponible.");
-    redirect('add_sale.php');
+    redirect("add_sale.php" . ($edit_mode ? "?edit={$venta_id}" : ""));
   }
 
-  // Si ya existe en el carrito, se suma
+  /* ====== SI ESTÁS MODIFICANDO UNA VENTA EXISTENTE ====== */
+  if ($edit_mode) {
+
+    // Insertar directo en detalle_venta
+    $sql_det = "INSERT INTO detalle_venta 
+                (venta_id, producto_id, variant_id, cantidad, precio_unitario)
+                VALUES ('{$venta_id}', '{$variant['product_id']}', '{$variant_id}', '{$qty}', '{$price}')";
+    $db->query($sql_det);
+
+    // Descontar stock
+    $db->query("UPDATE product_variants 
+                SET stock = stock - {$qty}
+                WHERE id = {$variant_id}");
+
+    $session->msg("s", "Producto agregado a la venta.");
+    redirect("edit_sale.php?id={$venta_id}");
+    exit;
+  }
+
+  /* ====== MODO NORMAL: AGREGAR AL CARRITO ====== */
   if (isset($_SESSION['carrito'][$variant_id])) {
     $_SESSION['carrito'][$variant_id]['qty'] += $qty;
   } else {
@@ -50,10 +91,9 @@ if (isset($_POST['add_to_cart'])) {
 }
 
 /* =====================================================
-    FINALIZAR VENTA
+    FINALIZAR VENTA (SOLO CUANDO NO ES EDIT MODE)
    ===================================================== */
-
-if (isset($_POST['finalizar_venta'])) {
+if (isset($_POST['finalizar_venta']) && !$edit_mode) {
 
   if (empty($_SESSION['carrito'])) {
     $session->msg("d", "No hay productos en el carrito.");
@@ -68,7 +108,7 @@ if (isset($_POST['finalizar_venta'])) {
 
     $venta_id = $db->insert_id();
 
-    // Insertar detalle y descontar stock
+    // Insertar detalles
     foreach ($_SESSION['carrito'] as $item) {
 
       $p_id = $item['product_id'];
@@ -76,20 +116,19 @@ if (isset($_POST['finalizar_venta'])) {
       $qty  = $item['qty'];
       $price = $item['price'];
 
-      // Insertar detalle_venta
-      $sql_det = "INSERT INTO detalle_venta (venta_id, producto_id, variant_id, cantidad, precio_unitario)
+      // Insertar detalle
+      $sql_det = "INSERT INTO detalle_venta 
+                  (venta_id, producto_id, variant_id, cantidad, precio_unitario)
                   VALUES ('{$venta_id}', '{$p_id}', '{$v_id}', '{$qty}', '{$price}')";
       $db->query($sql_det);
 
-      // Descontar stock
+      // Actualizar stock
       $variant = find_by_id('product_variants', $v_id);
       $new_stock = $variant['stock'] - $qty;
 
-      $sql_stock = "UPDATE product_variants SET stock = '{$new_stock}' WHERE id = '{$v_id}'";
-      $db->query($sql_stock);
+      $db->query("UPDATE product_variants SET stock = '{$new_stock}' WHERE id = '{$v_id}'");
     }
 
-    // Limpiar carrito
     $_SESSION['carrito'] = [];
 
     $session->msg("s", "Venta registrada correctamente");
@@ -103,6 +142,7 @@ if (isset($_POST['finalizar_venta'])) {
 
 include_once('layouts/header.php');
 ?>
+
 <div class="row">
   <div class="col-md-12">
     <?php echo display_msg($msg); ?>
@@ -111,10 +151,15 @@ include_once('layouts/header.php');
 
 <div class="row">
   <div class="col-md-8">
+
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
-        <strong><span class="glyphicon glyphicon-th"></span> Productos</strong>
+        <strong>
+          <span class="glyphicon glyphicon-th"></span> 
+          <?php echo $edit_mode ? "Agregar producto a venta #{$venta_id}" : "Productos"; ?>
+        </strong>
       </div>
+
       <div class="panel-body">
 
         <table class="table table-bordered">
@@ -140,8 +185,7 @@ include_once('layouts/header.php');
                 <td>$<?php echo number_format($product['sale_price'],0,'','.'); ?></td>
 
                 <td>
-                  <input type="number" name="quantity" 
-                         min="1" max="<?php echo $product['stock']; ?>" 
+                  <input type="number" name="quantity" min="1" max="<?php echo $product['stock']; ?>" 
                          class="form-control" required>
                 </td>
 
@@ -160,9 +204,11 @@ include_once('layouts/header.php');
 
       </div>
     </div>
+
   </div>
 
-  <!-- CARRITO -->
+  <!-- SOLO MODO NORMAL MUESTRA CARRITO -->
+  <?php if (!$edit_mode): ?>
   <div class="col-md-4">
     <div class="panel panel-default">
       <div class="panel-heading">
@@ -176,11 +222,7 @@ include_once('layouts/header.php');
 
         <table class="table table-bordered">
           <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Cant</th>
-              <th>Total</th>
-            </tr>
+            <tr><th>Producto</th><th>Cant</th><th>Total</th></tr>
           </thead>
           <tbody>
           <?php
@@ -212,5 +254,6 @@ include_once('layouts/header.php');
       </div>
     </div>
   </div>
+  <?php endif; ?>
 
 </div>

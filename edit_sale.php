@@ -40,8 +40,19 @@ if (isset($_POST['update_qty'])) {
   $variant_id = (int)$det['variant_id'];
 
   // Ajustar stock
-  $diff = $nueva_cantidad - $old_qty;
-  $db->query("UPDATE product_variants SET stock = stock - {$diff} WHERE id = {$variant_id}");
+ $diff = $nueva_cantidad - $old_qty;
+
+$variant = find_by_id('product_variants', $variant_id);
+$stock_actual = (int)$variant['stock'];
+
+// Si está aumentando cantidad, validar stock disponible
+if ($diff > 0 && $stock_actual < $diff) {
+    $session->msg("d", "No hay suficiente stock para aumentar la cantidad. Stock disponible: {$stock_actual}");
+    redirect("edit_sale.php?id={$venta_id}");
+}
+
+// Actualizar stock
+$db->query("UPDATE product_variants SET stock = stock - {$diff} WHERE id = {$variant_id}");
 
   // Actualizar detalle
   $db->query("UPDATE detalle_venta SET cantidad = {$nueva_cantidad} WHERE id = {$detalle_id}");

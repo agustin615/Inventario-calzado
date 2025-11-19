@@ -10,8 +10,8 @@ $sql = "
   SELECT 
     s.id AS venta_id,
     s.date,
-    SUM(d.cantidad * d.precio_unitario) AS total,
-    SUM(d.cantidad) AS total_items
+    IFNULL(SUM(d.cantidad * d.precio_unitario), 0) AS total,
+    IFNULL(SUM(d.cantidad), 0) AS total_items
   FROM sales s
   LEFT JOIN detalle_venta d ON d.venta_id = s.id
   GROUP BY s.id
@@ -46,7 +46,7 @@ $ventas = find_by_sql($sql);
             <tr>
               <th>#</th>
               <th>Productos</th>
-              <th class="text-center">Items</th>
+              <th class="text-center">Cantidad de productos</th>
               <th class="text-center">Total</th>
               <th class="text-center">Fecha</th>
               <th class="text-center">Acciones</th>
