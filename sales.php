@@ -45,8 +45,8 @@ $ventas = find_by_sql($sql);
           <thead>
             <tr>
               <th>#</th>
-              <th>Productos</th>
-              <th class="text-center">Cantidad de productos</th>
+              <th>Productos - Marca - Modelo - Variacion - Unidades de producto</th>
+              <th class="text-center">Cantida de productos</th>
               <th class="text-center">Total</th>
               <th class="text-center">Fecha</th>
               <th class="text-center">Acciones</th>
@@ -66,10 +66,12 @@ $ventas = find_by_sql($sql);
               $detalles = find_by_sql("
                 SELECT 
                   p.brand, p.model,
+                  c.name AS categoria,
                   v.color, v.size,
                   d.cantidad
                 FROM detalle_venta d
                 LEFT JOIN products p ON p.id = d.producto_id
+                LEFT JOIN categories c ON c.id = p.categorie_id
                 LEFT JOIN product_variants v ON v.id = d.variant_id
                 WHERE d.venta_id = {$v['venta_id']}
               ");
@@ -82,6 +84,7 @@ $ventas = find_by_sql($sql);
                   <?php foreach ($detalles as $d): ?>
                     <div>
                       <?php 
+                        echo "<strong>" . strtoupper($d['categoria']) . "</strong>: ";
                         echo strtoupper($d['brand'] . " " . $d['model']);
                         echo " — " . strtoupper($d['color']) . " / " . strtoupper($d['size']);
                         echo " <strong>x" . $d['cantidad'] . "</strong>";

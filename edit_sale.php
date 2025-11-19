@@ -39,20 +39,27 @@ if (isset($_POST['update_qty'])) {
   $old_qty = (int)$det['cantidad'];
   $variant_id = (int)$det['variant_id'];
 
-  // Ajustar stock
- $diff = $nueva_cantidad - $old_qty;
+  // Verificar si el producto está descontinuado
+  $variant = find_by_id('product_variants', $variant_id);
+  $product_id = (int)$variant['product_id'];
+  $product = find_by_id('products', $product_id);
 
-$variant = find_by_id('product_variants', $variant_id);
-$stock_actual = (int)$variant['stock'];
+  if ($product['status'] != 'Activo') {
+      $session->msg("d", "Este producto está DESCONTINUADO. No puedes modificar su cantidad ni venderlo.");
+      redirect("edit_sale.php?id={$venta_id}");
+  }
 
-// Si está aumentando cantidad, validar stock disponible
-if ($diff > 0 && $stock_actual < $diff) {
-    $session->msg("d", "No hay suficiente stock para aumentar la cantidad. Stock disponible: {$stock_actual}");
-    redirect("edit_sale.php?id={$venta_id}");
-}
+  $diff = $nueva_cantidad - $old_qty;
+  $stock_actual = (int)$variant['stock'];
 
-// Actualizar stock
-$db->query("UPDATE product_variants SET stock = stock - {$diff} WHERE id = {$variant_id}");
+  // Validar stock si se está aumentando cantidad
+  if ($diff > 0 && $stock_actual < $diff) {
+      $session->msg("d", "No hay suficiente stock para aumentar la cantidad. Stock disponible: {$stock_actual}");
+      redirect("edit_sale.php?id={$venta_id}");
+  }
+
+  // Actualizar stock
+  $db->query("UPDATE product_variants SET stock = stock - {$diff} WHERE id = {$variant_id}");
 
   // Actualizar detalle
   $db->query("UPDATE detalle_venta SET cantidad = {$nueva_cantidad} WHERE id = {$detalle_id}");

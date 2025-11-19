@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-11-2025 a las 18:40:23
+-- Tiempo de generación: 19-11-2025 a las 23:32:31
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -57,13 +57,6 @@ CREATE TABLE `detalle_venta` (
   `precio_unitario` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `detalle_venta`
---
-
-INSERT INTO `detalle_venta` (`id`, `venta_id`, `producto_id`, `variant_id`, `cantidad`, `precio_unitario`) VALUES
-(29, 41, 19, 30, 1, 3000.00);
-
 -- --------------------------------------------------------
 
 --
@@ -104,19 +97,20 @@ CREATE TABLE `products` (
   `sale_price` decimal(25,2) NOT NULL,
   `categorie_id` int(11) UNSIGNED NOT NULL,
   `media_id` int(11) DEFAULT 0,
-  `date` datetime NOT NULL
+  `date` datetime NOT NULL,
+  `estado` tinyint(1) NOT NULL DEFAULT 1,
+  `status` enum('Activo','Descontinuado') NOT NULL DEFAULT 'Activo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 --
 -- Volcado de datos para la tabla `products`
 --
 
-INSERT INTO `products` (`id`, `brand`, `model`, `buy_price`, `sale_price`, `categorie_id`, `media_id`, `date`) VALUES
-(10, 'puma', 'casual', 20000.00, 4000.00, 3, 7, '2025-10-20 20:09:27'),
-(11, 'ADIDAS', 'CASUAL', 1000.00, 2000.00, 3, 5, '2025-10-21 21:11:19'),
-(16, 'ZARA', 'MODA', 3500.00, 4000.00, 6, 10, '2025-11-11 17:59:47'),
-(17, 'NIKE', 'AIRS', 15000.00, 30000.00, 3, 4, '2025-11-19 13:41:44'),
-(19, 'GENERICO', 'CASUAL', 2000.00, 3000.00, 4, 8, '2025-11-19 13:44:09');
+INSERT INTO `products` (`id`, `brand`, `model`, `buy_price`, `sale_price`, `categorie_id`, `media_id`, `date`, `estado`, `status`) VALUES
+(11, 'ADIDAS', 'CASUAL', 1000.00, 2000.00, 3, 5, '2025-10-21 21:11:19', 1, 'Activo'),
+(16, 'ZARA', 'MODA', 3500.00, 4000.00, 6, 10, '2025-11-11 17:59:47', 1, 'Activo'),
+(17, 'NIKE', 'AIRS', 15000.00, 30000.00, 3, 4, '2025-11-19 13:41:44', 1, 'Activo'),
+(19, 'GENERICO', 'CASUAL', 2000.00, 3000.00, 4, 8, '2025-11-19 13:44:09', 1, 'Activo');
 
 -- --------------------------------------------------------
 
@@ -137,17 +131,13 @@ CREATE TABLE `product_variants` (
 --
 
 INSERT INTO `product_variants` (`id`, `product_id`, `color`, `size`, `stock`) VALUES
-(8, 10, 'blanco', '40', 20),
-(9, 10, 'negro', '34', 13),
-(10, 10, 'rojo', '38', 5),
-(11, 10, 'blanco', '36', 6),
-(12, 10, 'blanco', '37', 10),
 (13, 11, 'BLANCO', '42', 10),
 (24, 16, 'CAFE', '34', 15),
 (25, 16, 'BLANCO', '33', 10),
 (26, 17, 'BLANCO', '34', 15),
 (27, 17, 'ROJO', '43', 10),
-(30, 19, 'BLANCO', 'S', 14);
+(30, 19, 'BLANCO', 'S', 15),
+(32, 16, 'ROJO', '22', 45);
 
 -- --------------------------------------------------------
 
@@ -159,13 +149,6 @@ CREATE TABLE `sales` (
   `id` int(11) UNSIGNED NOT NULL,
   `date` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
-
---
--- Volcado de datos para la tabla `sales`
---
-
-INSERT INTO `sales` (`id`, `date`) VALUES
-(41, '2025-11-19 14:24:00');
 
 -- --------------------------------------------------------
 
@@ -290,7 +273,7 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT de la tabla `detalle_venta`
 --
 ALTER TABLE `detalle_venta`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de la tabla `media`
@@ -302,19 +285,19 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT de la tabla `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `product_variants`
 --
 ALTER TABLE `product_variants`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de la tabla `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT de la tabla `users`

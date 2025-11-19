@@ -29,6 +29,8 @@
     <ul class="nav submenu">
        <li><a href="product.php">Administrar productos</a> </li>
        <li><a href="add_product.php">Agregar productos</a> </li>
+      <li><a href="productos_descontinuados.php">Productos descontinuados</a></li>
+
    </ul>
   </li>
   <li>
