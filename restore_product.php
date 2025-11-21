@@ -10,7 +10,12 @@ if (!$product) {
     redirect('product.php');
 }
 
-$sql = "UPDATE products SET status = 'Activo' WHERE id = '{$product_id}' LIMIT 1";
+// Restaurar correctamente (status + estado)
+$sql = "UPDATE products 
+        SET status = 'Activo', estado = 1 
+        WHERE id = '{$product_id}' 
+        LIMIT 1";
+
 $result = $db->query($sql);
 
 if ($result) {

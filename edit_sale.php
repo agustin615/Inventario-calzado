@@ -20,7 +20,7 @@ if (!$venta) {
 // Obtener todos los productos vendidos
 $sql = "
   SELECT d.id AS detalle_id, d.cantidad, d.precio_unitario,
-         p.id AS product_id, p.brand, p.model,
+         p.id AS product_id, p.brand, p.model, p.status,      /* 🔒 FIX: agregamos status */
          v.id AS variant_id, v.color, v.size
   FROM detalle_venta d
   JOIN products p ON d.producto_id = p.id
@@ -29,7 +29,12 @@ $sql = "
 ";
 $detalle = find_by_sql($sql);
 
-// Si se edita cantidad
+
+// =============================================================
+//   EDITAR CANTIDAD
+// =============================================================
+
+
 if (isset($_POST['update_qty'])) {
   $detalle_id = (int)$_POST['detalle_id'];
   $nueva_cantidad = (int)$_POST['cantidad'];

@@ -30,13 +30,15 @@ if (!isset($_SESSION['carrito'])) {
 /* =====================================================
     OBTENER PRODUCTOS Y VARIANTES
    ===================================================== */
-$sql  = "SELECT p.id AS product_id, p.brand, p.model, p.sale_price, ";
-$sql .= "c.name AS categorie, ";
-$sql .= "v.id AS variant_id, v.color, v.size, v.stock ";
-$sql .= "FROM products p ";
-$sql .= "LEFT JOIN categories c ON p.categorie_id = c.id ";
-$sql .= "LEFT JOIN product_variants v ON p.id = v.product_id ";
-$sql .= "ORDER BY p.brand, p.model";
+$sql  = "SELECT p.id AS product_id, p.brand, p.model, p.sale_price, 
+         c.name AS categorie, 
+         v.id AS variant_id, v.color, v.size, v.stock
+         FROM products p
+         LEFT JOIN categories c ON p.categorie_id = c.id
+         LEFT JOIN product_variants v ON p.id = v.product_id
+         WHERE p.estado = 1   -- 🔥 Solo productos activos
+         ORDER BY p.brand, p.model";
+
 $products = find_by_sql($sql);
 
 /* =====================================================
@@ -50,6 +52,13 @@ if (isset($_POST['add_to_cart'])) {
 
   $variant = find_by_id('product_variants', $variant_id);
 
+  $product_check = find_by_id('products', $variant['product_id']);
+
+  if ($product_check['estado'] == 0) {   // 🔥 producto descontinuado
+      $session->msg("d", "Este producto está descontinuado y no puede venderse.");
+      redirect("add_sale.php" . ($edit_mode ? "?edit={$venta_id}" : ""));
+  }
+
   if (!$variant || $variant['stock'] < $qty) {
     $session->msg("d", "No hay suficiente stock disponible.");
     redirect("add_sale.php" . ($edit_mode ? "?edit={$venta_id}" : ""));
@@ -57,7 +66,12 @@ if (isset($_POST['add_to_cart'])) {
 
   /* ====== SI ESTÁS MODIFICANDO UNA VENTA EXISTENTE ====== */
   if ($edit_mode) {
+  $product_check = find_by_id('products', $variant['product_id']);
 
+  if ($product_check['estado'] == 1) {
+      $session->msg("d", "Este producto está descontinuado y no puede agregarse a una venta.");
+      redirect("edit_sale.php?id={$venta_id}");
+  }
     // Insertar directo en detalle_venta
     $sql_det = "INSERT INTO detalle_venta 
                 (venta_id, producto_id, variant_id, cantidad, precio_unitario)

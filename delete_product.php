@@ -10,8 +10,12 @@ if (!$product) {
     redirect('product.php');
 }
 
-// En lugar de borrar, lo descontinuamos
-$sql = "UPDATE products SET status = 'Descontinuado' WHERE id = '{$product_id}' LIMIT 1";
+// Descontinuar correctamente (status + estado)
+$sql = "UPDATE products 
+        SET status = 'Descontinuado', estado = 0 
+        WHERE id = '{$product_id}' 
+        LIMIT 1";
+
 $result = $db->query($sql);
 
 if ($result) {

@@ -24,6 +24,7 @@
   <div class="col-md-12">
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
+        <th>Lista de productos</th>
         <div class="pull-right">
           <a href="add_product.php" class="btn btn-primary">Agregar producto</a>
         </div>
