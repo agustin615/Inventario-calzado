@@ -46,8 +46,10 @@ $ventas = find_by_sql($sql);
             <tr>
               <th>#</th>
               <th>Productos - Marca - Modelo - Variacion - Unidades de producto</th>
-              <th class="text-center">Cantida de productos</th>
-              <th class="text-center">Total</th>
+              <th class="text-center">Precio unitario</th>
+              <th class="text-center">Total producto</th>
+              <th class="text-center">Cantidad total</th>
+              <th class="text-center">Total venta</th>
               <th class="text-center">Fecha</th>
               <th class="text-center">Acciones</th>
             </tr>
@@ -56,7 +58,7 @@ $ventas = find_by_sql($sql);
           <tbody>
           <?php if (empty($ventas)): ?>
             <tr>
-              <td colspan="6" class="text-center">No hay ventas registradas.</td>
+              <td colspan="8" class="text-center">No hay ventas registradas.</td>
             </tr>
           <?php else: ?>
             <?php $i = 1; foreach ($ventas as $v): ?>
@@ -68,7 +70,8 @@ $ventas = find_by_sql($sql);
                   p.brand, p.model,
                   c.name AS categoria,
                   v.color, v.size,
-                  d.cantidad
+                  d.cantidad,
+                  d.precio_unitario
                 FROM detalle_venta d
                 LEFT JOIN products p ON p.id = d.producto_id
                 LEFT JOIN categories c ON c.id = p.categorie_id
@@ -82,21 +85,37 @@ $ventas = find_by_sql($sql);
 
                 <td>
                   <?php foreach ($detalles as $d): ?>
-                    <div>
-                      <?php 
-                        echo "<strong>" . strtoupper($d['categoria']) . "</strong>: ";
+                    <div style="margin-bottom:4px;">
+                      <strong><?php echo strtoupper($d['categoria']); ?></strong>: 
+                      <?php
                         echo strtoupper($d['brand'] . " " . $d['model']);
                         echo " — " . strtoupper($d['color']) . " / " . strtoupper($d['size']);
-                        echo " <strong>x" . $d['cantidad'] . "</strong>";
+                        echo " <strong>x{$d['cantidad']}</strong>";
                       ?>
                     </div>
                   <?php endforeach; ?>
                 </td>
 
+                <!-- PRECIO UNITARIO -->
+                <td class="text-center">
+                  <?php foreach ($detalles as $d): ?>
+                    $<?php echo number_format($d['precio_unitario'], 0, '', '.'); ?><br>
+                  <?php endforeach; ?>
+                </td>
+
+                <!-- TOTAL DE CADA PRODUCTO -->
+                <td class="text-center">
+                  <?php foreach ($detalles as $d): ?>
+                    $<?php echo number_format($d['precio_unitario'] * $d['cantidad'], 0, '', '.'); ?><br>
+                  <?php endforeach; ?>
+                </td>
+
+                <!-- TOTAL ITEMS -->
                 <td class="text-center">
                   <?php echo (int)$v['total_items']; ?>
                 </td>
 
+                <!-- TOTAL VENTA -->
                 <td class="text-center">
                   $<?php echo number_format($v['total'], 0, '', '.'); ?>
                 </td>

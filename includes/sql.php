@@ -279,22 +279,30 @@ function find_recent_product_added($limit){
 
   return find_by_sql($sql);
 }
- /*--------------------------------------------------------------*/
- /* Function for Find Highest saleing Product
- /*--------------------------------------------------------------*/
-function find_higest_saleing_product($limit){
-   global $db;
-   $sql  = "SELECT CONCAT(p.brand, ' ', p.model) AS name, ";
-   $sql .= "c.name AS categorie, ";
-   $sql .= "COUNT(s.product_id) AS totalSold, ";
-   $sql .= "SUM(s.qty) AS totalQty ";
-   $sql .= "FROM sales s ";
-   $sql .= "LEFT JOIN products p ON p.id = s.product_id ";
-   $sql .= "LEFT JOIN categories c ON c.id = p.categorie_id ";
-   $sql .= "GROUP BY p.id, c.name ";
-   $sql .= "ORDER BY SUM(s.qty) DESC ";
-   $sql .= "LIMIT ".$db->escape((int)$limit);
-   return $db->query($sql);
+
+
+/* ==========================================================
+   PRODUCTO MÁS VENDIDO (NUEVO SISTEMA CON detalle_venta)
+   ========================================================== */
+function find_higest_saleing_product($limit) {
+    global $db;
+
+    $limit = (int)$limit;
+
+    $sql = "SELECT 
+              dv.producto_id,
+              CONCAT(p.brand,' ',p.model) AS name,
+              c.name AS category_name,
+              SUM(dv.cantidad) AS totalQty,
+              SUM(dv.cantidad * dv.precio_unitario) AS totalSold
+            FROM detalle_venta dv
+            LEFT JOIN products p ON dv.producto_id = p.id
+            LEFT JOIN categories c ON p.categorie_id = c.id
+            GROUP BY dv.producto_id
+            ORDER BY totalSold DESC
+            LIMIT {$limit}";
+
+    return find_by_sql($sql);
 }
 
 
@@ -314,21 +322,27 @@ function find_higest_saleing_product($limit){
  /*--------------------------------------------------------------*/
 function find_recent_sale_added($limit){
   global $db;
-  $sql  = "SELECT 
-            s.id,
-            s.qty,
-            s.price,
-            s.date,
-            CONCAT(p.brand,' ',p.model) AS product_name,
-            c.name AS category_name,
-            (s.qty * s.price) AS total_sale
-          ";
-  $sql .= " FROM sales s";
-  $sql .= " LEFT JOIN products p ON s.product_id = p.id";
-  $sql .= " LEFT JOIN categories c ON p.categorie_id = c.id";
-  $sql .= " ORDER BY s.date DESC LIMIT ".$db->escape((int)$limit);
+
+  $sql = "
+    SELECT 
+      dv.id,
+      dv.cantidad,
+      dv.precio_unitario,
+      s.date,
+      CONCAT(p.brand,' ',p.model) AS product_name,
+      c.name AS category_name,
+      (dv.cantidad * dv.precio_unitario) AS total_sale
+    FROM detalle_venta dv
+    LEFT JOIN sales s ON dv.venta_id = s.id
+    LEFT JOIN products p ON dv.producto_id = p.id
+    LEFT JOIN categories c ON p.categorie_id = c.id
+    ORDER BY s.date DESC
+    LIMIT " . $db->escape((int)$limit);
+
   return find_by_sql($sql);
 }
+
+
 
 /*--------------------------------------------------------------*/
 /* Function for Generate sales report by two dates
@@ -378,5 +392,57 @@ function  monthlySales($year){
   $sql .= " ORDER BY date_format(s.date, '%c' ) ASC";
   return find_by_sql($sql);
 }
+
+
+function find_last_sales_full($limit = 5) {
+    global $db;
+    $limit = (int)$limit;
+
+    $sql = "SELECT
+                s.id AS sale_id,
+                s.date,
+                dv.cantidad,
+                dv.precio_unitario,
+                CONCAT(p.brand, ' ', p.model) AS product_name,
+                c.name AS category_name
+            FROM sales s
+            LEFT JOIN detalle_venta dv ON s.id = dv.venta_id
+            LEFT JOIN products p ON dv.producto_id = p.id
+            LEFT JOIN categories c ON p.categorie_id = c.id
+            ORDER BY s.date DESC, s.id DESC";
+
+    $result = find_by_sql($sql);
+
+    // AGRUPAR POR VENTA
+    $ventas = [];
+    foreach ($result as $row) {
+        $id = $row['sale_id'];
+
+        if (!isset($ventas[$id])) {
+            $ventas[$id] = [
+                'sale_id' => $id,
+                'date' => $row['date'],
+                'items' => [],
+                'total' => 0
+            ];
+        }
+
+        // Agregar producto
+        $ventas[$id]['items'][] = [
+            'name' => $row['product_name'],
+            'category' => $row['category_name'],
+            'cantidad' => $row['cantidad'],
+            'precio' => $row['precio_unitario'],
+            'subtotal' => $row['cantidad'] * $row['precio_unitario']
+        ];
+
+        // Acumular total
+        $ventas[$id]['total'] += $row['cantidad'] * $row['precio_unitario'];
+    }
+
+    // Tomar solo las últimas 5 ventas completas
+    return array_slice($ventas, 0, $limit, true);
+}
+
 
 ?>
