@@ -127,4 +127,24 @@ function randString($length = 5)
   return $str;
 }
 
+
+function find_sales_report($start_date, $end_date){
+    global $db;
+    $sql  = "SELECT v.fecha_venta AS date,
+                    p.nombre AS name,
+                    p.precio_compra AS buy_price,
+                    d.precio_unitario AS sale_price,
+                    d.cantidad AS total_sales,
+                    (d.cantidad * d.precio_unitario) AS total_saleing_price
+            FROM detalle_venta d
+            INNER JOIN ventas v ON v.id = d.id_venta
+            INNER JOIN producto p ON p.id = d.id_producto
+            WHERE DATE(v.fecha_venta) BETWEEN '{$start_date}' AND '{$end_date}'
+            ORDER BY v.fecha_venta DESC";
+
+    return find_by_sql($sql);
+}
+
+
+
 ?>

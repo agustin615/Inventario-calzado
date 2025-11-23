@@ -88,8 +88,8 @@ $ultimas_ventas = find_last_sales_full('5');
             <tr>
               <th>Producto - Modelo</th>
               <th>Categoría</th>
-              <th>Variaciones vendidas</th>
-              <th>Cantidad total</th>
+              <th>Cantidades del producto vendidas</th>
+              <th>Total de cantidad de producto vendido</th>
             </tr>
           </thead>
           <tbody>
@@ -97,8 +97,8 @@ $ultimas_ventas = find_last_sales_full('5');
               <tr>
                 <td><?php echo isset($product_sold['name']) ? remove_junk(first_character($product_sold['name'])) : 'Producto sin nombre'; ?></td>
                 <td><?php echo remove_junk(first_character($product_sold['category_name'] ?? 'Sin categoría')); ?></td>
-                <td class="text-center"><?php echo (int)$product_sold['totalSold']; ?></td>
                 <td class="text-center"><?php echo (int)$product_sold['totalQty']; ?></td>
+                <td class="text-center"><?php echo (int)$product_sold['totalSold']; ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -167,7 +167,7 @@ $ultimas_ventas = find_last_sales_full('5');
                 <th>Producto</th>
                 <th>Categoría</th>
                 <th>Cantidad</th>
-                <th>Precio</th>
+                <th>Precio unitario del producto</th>
                 <th>Subtotal</th>
               </tr>
             </thead>

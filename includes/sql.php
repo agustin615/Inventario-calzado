@@ -347,22 +347,33 @@ function find_recent_sale_added($limit){
 /*--------------------------------------------------------------*/
 /* Function for Generate sales report by two dates
 /*--------------------------------------------------------------*/
-function find_sale_by_dates($start_date,$end_date){
+function find_sale_by_dates($start_date, $end_date) {
   global $db;
-  $start_date  = date("Y-m-d", strtotime($start_date));
-  $end_date    = date("Y-m-d", strtotime($end_date));
-  $sql  = "SELECT s.date, p.name,p.sale_price,p.buy_price,";
-  $sql .= "COUNT(s.product_id) AS total_records,";
-  $sql .= "SUM(s.qty) AS total_sales,";
-  $sql .= "SUM(p.sale_price * s.qty) AS total_saleing_price,";
-  $sql .= "SUM(p.buy_price * s.qty) AS total_buying_price ";
-  $sql .= "FROM sales s ";
-  $sql .= "LEFT JOIN products p ON s.product_id = p.id";
-  $sql .= " WHERE s.date BETWEEN '{$start_date}' AND '{$end_date}'";
-  $sql .= " GROUP BY DATE(s.date),p.name";
-  $sql .= " ORDER BY DATE(s.date) DESC";
-  return $db->query($sql);
+
+  $start_date = date("Y-m-d", strtotime($start_date));
+  $end_date   = date("Y-m-d", strtotime($end_date));
+
+  $sql = "SELECT 
+            s.id AS venta_id,
+            s.date,
+            p.id AS producto_id,
+            p.brand,
+            p.model,
+            p.buy_price,
+            p.sale_price,
+            d.cantidad,
+            (d.cantidad * p.sale_price) AS total_linea,
+            (d.cantidad * p.buy_price) AS total_compra_linea
+          FROM sales s
+          INNER JOIN detalle_venta d ON s.id = d.venta_id
+          INNER JOIN products p ON p.id = d.producto_id
+          WHERE DATE(s.date) BETWEEN '{$start_date}' AND '{$end_date}'
+          ORDER BY s.date DESC, s.id DESC";
+
+  return find_by_sql($sql);
 }
+
+
 /*--------------------------------------------------------------*/
 /* Function for Generate Daily sales report
 /*--------------------------------------------------------------*/
