@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 22-11-2025 a las 21:21:29
+-- Tiempo de generación: 25-11-2025 a las 22:48:03
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -67,7 +67,13 @@ INSERT INTO `detalle_venta` (`id`, `venta_id`, `producto_id`, `variant_id`, `can
 (74, 73, 19, 30, 4, 3000.00),
 (75, 73, 22, 35, 2, 45000.00),
 (76, 73, 23, 37, 1, 10000.00),
-(77, 74, 22, 36, 20, 45000.00);
+(77, 74, 22, 36, 20, 45000.00),
+(78, 75, 22, 35, 1, 45000.00),
+(79, 76, 17, 26, 5, 30000.00),
+(80, 76, 22, 36, 1, 45000.00),
+(81, 77, 21, 33, 1, 60000.00),
+(82, 77, 19, 30, 1, 3000.00),
+(83, 77, 23, 37, 1, 10000.00);
 
 -- --------------------------------------------------------
 
@@ -151,15 +157,15 @@ INSERT INTO `product_variants` (`id`, `product_id`, `color`, `size`, `stock`) VA
 (13, 11, 'BLANCO', '42', 10),
 (24, 16, 'CAFE', '34', 15),
 (25, 16, 'BLANCO', '33', 10),
-(26, 17, 'BLANCO', '34', 15),
+(26, 17, 'BLANCO', '34', 10),
 (27, 17, 'ROJO', '43', 10),
-(30, 19, 'BLANCO', 'S', 11),
+(30, 19, 'BLANCO', 'S', 10),
 (32, 16, 'ROJO', '22', 44),
-(33, 21, 'NEGRO', '34', 12),
+(33, 21, 'NEGRO', '34', 11),
 (34, 21, 'CAFE', '40', 10),
-(35, 22, 'NEGRO', '40', 28),
-(36, 22, 'BLANCO', '44', 10),
-(37, 23, 'NEGRO', '33', 19);
+(35, 22, 'NEGRO', '40', 27),
+(36, 22, 'BLANCO', '44', 9),
+(37, 23, 'NEGRO', '33', 18);
 
 -- --------------------------------------------------------
 
@@ -177,9 +183,12 @@ CREATE TABLE `sales` (
 --
 
 INSERT INTO `sales` (`id`, `date`) VALUES
-(72, '2025-11-22 13:57:58'),
+(72, '2025-11-07 14:00:00'),
 (73, '2025-11-22 16:04:54'),
-(74, '2025-11-22 16:05:02');
+(74, '2025-11-22 16:05:02'),
+(75, '2025-11-23 15:20:23'),
+(76, '2025-11-25 18:01:28'),
+(77, '2025-10-08 18:01:00');
 
 -- --------------------------------------------------------
 
@@ -203,7 +212,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `username`, `password`, `user_level`, `image`, `status`, `last_login`) VALUES
-(1, 'Admin Admin', 'Admin', 'd033e22ae348aeb5660fc2140aec35850c4da997', 1, 'siz4lkk1.png', 1, '2025-11-22 13:47:43'),
+(1, 'Admin Admin', 'Admin', 'd033e22ae348aeb5660fc2140aec35850c4da997', 1, 'siz4lkk1.png', 1, '2025-11-25 16:25:27'),
 (10, 'Prueba Prueba', 'Prueba', '711383a59fda05336fd2ccf70c8059d1523eb41a', 3, 'eh4vowee10.jpg', 1, '2021-07-27 03:08:58');
 
 -- --------------------------------------------------------
@@ -304,7 +313,7 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT de la tabla `detalle_venta`
 --
 ALTER TABLE `detalle_venta`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT de la tabla `media`
@@ -328,7 +337,7 @@ ALTER TABLE `product_variants`
 -- AUTO_INCREMENT de la tabla `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
 
 --
 -- AUTO_INCREMENT de la tabla `users`

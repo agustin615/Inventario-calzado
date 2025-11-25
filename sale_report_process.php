@@ -1,130 +1,152 @@
 <?php
-$page_title = 'Reporte de Ventas';
+$page_title = 'Reporte de ventas';
 require_once('includes/load.php');
 page_require_level(3);
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
-
+// ------------ VALIDAR FECHAS ------------
 if (isset($_POST['submit'])) {
+    $req_dates = array('start-date', 'end-date');
+    validate_fields($req_dates);
 
-    global $db;
-
-    $start_date  = date("Y-m-d", strtotime($_POST['start-date']));
-    $end_date    = date("Y-m-d", strtotime($_POST['end-date']));
-
-    $sql = "
-        SELECT 
-            s.id AS sale_id,
-            DATE(s.date) AS fecha_venta,
-            dv.producto_id,
-            dv.cantidad,
-            dv.precio_unitario,
-            p.brand,
-            p.model
-        FROM sales s
-        JOIN detalle_venta dv ON s.id = dv.venta_id
-        JOIN products p ON dv.producto_id = p.id
-        WHERE DATE(s.date) BETWEEN '{$start_date}' AND '{$end_date}'
-        ORDER BY s.id DESC
-    ";
-
-    $result = $db->query($sql);
-
-    $ventas = [];
-    $total_general = 0;
-
-    while($row = $result->fetch_assoc()) {
-
-        $sale_id = $row['sale_id'];
-
-        if (!isset($ventas[$sale_id])) {
-            $ventas[$sale_id] = [
-                'fecha' => $row['fecha_venta'],
-                'items' => [],
-                'total_venta' => 0
-            ];
-        }
-
-        $subtotal = $row['cantidad'] * $row['precio_unitario'];
-        $ventas[$sale_id]['total_venta'] += $subtotal;
-        $total_general += $subtotal;
-
-        $ventas[$sale_id]['items'][] = [
-            'brand' => $row['brand'],
-            'model' => $row['model'],
-            'cantidad' => $row['cantidad'],
-            'precio_unitario' => $row['precio_unitario'],
-            'subtotal' => $subtotal
-        ];
+    if (empty($errors)) {
+        $start_date = remove_junk($db->escape($_POST['start-date']));
+        $end_date   = remove_junk($db->escape($_POST['end-date']));
+    } else {
+        $session->msg("d", $errors);
+        redirect('sales_report.php', false);
     }
+} else {
+    $session->msg("d", "Seleccione un rango de fechas");
+    redirect('sales_report.php', false);
+}
 
-    // ------------------------------
-    //   CONSTRUIR EL HTML DEL PDF
-    // ------------------------------
+// ------------ CONSULTA REAL ------------
+$sql = "
+    SELECT 
+        s.id AS venta_id,
+        s.date AS fecha,
+        p.id AS product_id,
+        p.brand,
+        p.model,
+        c.name AS categoria,
+        v.color,
+        v.size,
+        dv.cantidad,
+        dv.precio_unitario,
+        (dv.cantidad * dv.precio_unitario) AS total_producto
+    FROM sales s
+    JOIN detalle_venta dv ON dv.venta_id = s.id
+    JOIN products p ON p.id = dv.producto_id
+    LEFT JOIN categories c ON c.id = p.categorie_id
+    LEFT JOIN product_variants v ON v.id = dv.variant_id
+    WHERE DATE(s.date) BETWEEN '{$start_date}' AND '{$end_date}'
+    ORDER BY s.date DESC, s.id DESC
+";
 
-    $html = "
-    <h2 style='text-align:center;'>Reporte de Ventas</h2>
-    <h4 style='text-align:center;'>Desde: {$start_date} - Hasta: {$end_date}</h4>
-    <hr>
+$results = $db->query($sql);
+
+// ------------ PREPARAR HTML PARA PDF ------------
+$html = '
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte de ventas</title>
+<style>
+body { font-family: Arial, sans-serif; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+th, td { border: 1px solid #444; padding: 6px; text-align: left; }
+th { background: #f0f0f0; }
+h2 { text-align: center; }
+.subtitulo { font-size: 14px; margin-bottom: 15px; }
+</style>
+</head>
+<body>
+
+<h2>Reporte de ventas</h2>
+<p class="subtitulo"><strong>Desde:</strong> '.$start_date.' &nbsp;&nbsp; <strong>Hasta:</strong> '.$end_date.'</p>
+';
+
+$ventas = [];
+$total_general = 0;
+
+while ($row = $results->fetch_assoc()) {
+    $ventas[$row['venta_id']][] = $row;
+}
+
+// ------------ IMPRIMIR CADA VENTA ------------
+foreach ($ventas as $venta_id => $items) {
+    $fecha = $items[0]['fecha'];
+
+    $html .= "
+    <h3>Venta #{$venta_id}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Producto: Marca-Modelo</th>
+                <th>Categoría</th>
+                <th>Color</th>
+                <th>Talla</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
     ";
 
-    foreach ($ventas as $id => $v) {
+    $total_venta = 0;
+
+    foreach ($items as $p) {
+        $total_venta += $p['total_producto'];
+        $total_general += $p['total_producto'];
 
         $html .= "
-        <h3>Venta #{$id} — Fecha: {$v['fecha']}</h3>
-        <table border='1' width='100%' cellpadding='5' cellspacing='0'>
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio unitario</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-        ";
-
-        foreach ($v['items'] as $item) {
-            $html .= "
-                <tr>
-                    <td>{$item['brand']} {$item['model']}</td>
-                    <td>{$item['cantidad']}</td>
-                    <td>$".number_format($item['precio_unitario'],0,',','.')."</td>
-                    <td>$".number_format($item['subtotal'],0,',','.')."</td>
-                </tr>
-            ";
-        }
-
-        $html .= "
-            </tbody>
-        </table>
-        <h4>Total venta: $".number_format($v['total_venta'],0,',','.')."</h4>
-        <hr>
+        <tr>
+            <td>{$p['brand']} {$p['model']}</td>
+            <td>".($p['categoria'] ?? 'Sin categoría')."</td>
+            <td>".($p['color'] ?? 'N/A')."</td>
+            <td>".($p['size'] ?? 'N/A')."</td>
+            <td>{$p['cantidad']}</td>
+            <td>$ {$p['precio_unitario']}</td>
+            <td>$ {$p['total_producto']}</td>
+        </tr>
         ";
     }
 
     $html .= "
-    <h2 style='text-align:right;'>TOTAL GENERAL: $".number_format($total_general,0,',','.')."</h2>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan='6' style='text-align:right;'><strong>Total venta:</strong></td>
+                <td><strong>$ {$total_venta}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+    <hr>
     ";
-
-
-    // ------------------------------
-    //   GENERAR EL PDF
-    // ------------------------------
-
-    require_once __DIR__ . '/libs/dompdf/autoload.inc.php';
-
-
-    $options = new Options();
-    $options->set('isHtml5ParserEnabled', true);
-    $options->set('isRemoteEnabled', true);
-
-    $dompdf = new Dompdf($options);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-
-    // Descargar automáticamente
-    $dompdf->stream("reporte_ventas.pdf", ["Attachment" => true]);
 }
+
+$html .= "
+<h2>Total General: $ {$total_general}</h2>
+</body>
+</html>
+";
+
+// ------------ GENERAR PDF ------------
+require_once 'libs/dompdf/autoload.inc.php';
+use Dompdf\Dompdf;
+
+$dompdf = new Dompdf();
+$dompdf->loadHtml($html);
+$dompdf->setPaper('A4', 'portrait');
+$dompdf->render();
+
+// -------- DESCARGA FORZADA --------
+$pdf = $dompdf->output();
+header("Content-Type: application/pdf");
+header("Content-Disposition: attachment; filename=reporte_ventas.pdf");
+header("Content-Length: " . strlen($pdf));
+
+echo $pdf;
+exit;

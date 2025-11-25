@@ -3,9 +3,23 @@ $page_title = 'Lista de ventas';
 require_once('includes/load.php');
 page_require_level(3);
 
-/*
-  Trae todas las ventas con su total final
-*/
+/* ------------------ FILTRO DE FECHAS ------------------ */
+$from = isset($_GET['from']) ? $db->escape($_GET['from']) : '';
+$to   = isset($_GET['to'])   ? $db->escape($_GET['to'])   : '';
+
+$condiciones = "";
+
+if ($from != '' && $to != '') {
+  $condiciones = "WHERE s.date BETWEEN '{$from}' AND '{$to}'";
+} 
+else if ($from != '') {
+  $condiciones = "WHERE s.date >= '{$from}'";
+}
+else if ($to != '') {
+  $condiciones = "WHERE s.date <= '{$to}'";
+}
+
+/* ------------------ CONSULTA PRINCIPAL ------------------ */
 $sql = "
   SELECT 
     s.id AS venta_id,
@@ -14,6 +28,7 @@ $sql = "
     IFNULL(SUM(d.cantidad), 0) AS total_items
   FROM sales s
   LEFT JOIN detalle_venta d ON d.venta_id = s.id
+  {$condiciones}
   GROUP BY s.id
   ORDER BY s.date DESC
 ";
@@ -32,7 +47,8 @@ $ventas = find_by_sql($sql);
 <div class="row">
   <div class="col-md-12">
     <div class="panel panel-default">
-      
+
+      <!-- HEADER -->
       <div class="panel-heading clearfix">
         <strong><span class="glyphicon glyphicon-th"></span> Todas las ventas</strong>
         <div class="pull-right">
@@ -40,12 +56,30 @@ $ventas = find_by_sql($sql);
         </div>
       </div>
 
+      <!-- FORMULARIO DE BUSQUEDA -->
       <div class="panel-body">
+        <form method="GET" class="form-inline" style="margin-bottom:15px;">
+          <label>Desde: </label>
+          <input type="date" name="from" class="form-control"
+                 value="<?php echo isset($_GET['from']) ? $_GET['from'] : ''; ?>">
+
+          <label style="margin-left:10px;">Hasta: </label>
+          <input type="date" name="to" class="form-control"
+                 value="<?php echo isset($_GET['to']) ? $_GET['to'] : ''; ?>">
+
+          <button type="submit" class="btn btn-success" style="margin-left:10px;">
+            Buscar
+          </button>
+
+          <a href="sales.php" class="btn btn-default">Limpiar</a>
+        </form>
+
+        <!-- TABLA DE VENTAS -->
         <table class="table table-bordered table-striped">
           <thead>
             <tr>
               <th>#</th>
-              <th>Productos - Marca - Modelo - Variacion - Unidades de producto</th>
+              <th>Productos - Marca - Modelo - Variación</th>
               <th class="text-center">Precio unitario</th>
               <th class="text-center">Total producto</th>
               <th class="text-center">Cantidad total</th>
@@ -64,7 +98,7 @@ $ventas = find_by_sql($sql);
             <?php $i = 1; foreach ($ventas as $v): ?>
 
               <?php
-              /* Obtener productos de esta venta */
+              /* OBTENER DETALLES DE CADA PRODUCTO DE LA VENTA */
               $detalles = find_by_sql("
                 SELECT 
                   p.brand, p.model,
@@ -86,7 +120,7 @@ $ventas = find_by_sql($sql);
                 <td>
                   <?php foreach ($detalles as $d): ?>
                     <div style="margin-bottom:4px;">
-                      <strong><?php echo strtoupper($d['categoria']); ?></strong>: 
+                      <strong><?php echo strtoupper($d['categoria']); ?></strong>:
                       <?php
                         echo strtoupper($d['brand'] . " " . $d['model']);
                         echo " — " . strtoupper($d['color']) . " / " . strtoupper($d['size']);
@@ -103,7 +137,7 @@ $ventas = find_by_sql($sql);
                   <?php endforeach; ?>
                 </td>
 
-                <!-- TOTAL DE CADA PRODUCTO -->
+                <!-- TOTAL PRODUCTO -->
                 <td class="text-center">
                   <?php foreach ($detalles as $d): ?>
                     $<?php echo number_format($d['precio_unitario'] * $d['cantidad'], 0, '', '.'); ?><br>
@@ -124,22 +158,19 @@ $ventas = find_by_sql($sql);
                   <?php echo read_date($v['date']); ?>
                 </td>
 
+                <!-- ACCIONES -->
                 <td class="text-center">
                   <div class="btn-group">
-                    
-                    <!-- EDITAR -->
-                    <a href="edit_sale.php?id=<?php echo (int)$v['venta_id']; ?>" 
+                    <a href="edit_sale.php?id=<?php echo (int)$v['venta_id']; ?>"
                        class="btn btn-warning btn-xs" title="Editar">
                       <span class="glyphicon glyphicon-edit"></span>
                     </a>
 
-                    <!-- ELIMINAR -->
                     <a href="delete_sale.php?id=<?php echo (int)$v['venta_id']; ?>"
                        class="btn btn-danger btn-xs"
                        onclick="return confirm('¿Seguro que deseas eliminar esta venta?');">
                       <span class="glyphicon glyphicon-trash"></span>
                     </a>
-
                   </div>
                 </td>
               </tr>
@@ -150,6 +181,7 @@ $ventas = find_by_sql($sql);
 
         </table>
       </div>
+
     </div>
   </div>
 </div>

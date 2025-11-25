@@ -3,16 +3,40 @@
   require_once('includes/load.php');
   page_require_level(2);
 
-  // Trae solo productos activos
-  $products = find_by_sql("
+  // --- CAPTURAR FILTROS ---
+  $search_brand = isset($_GET['brand']) ? remove_junk($db->escape($_GET['brand'])) : '';
+  $search_model = isset($_GET['model']) ? remove_junk($db->escape($_GET['model'])) : '';
+  $search_category = isset($_GET['category']) ? remove_junk($db->escape($_GET['category'])) : '';
+
+  // --- TRAER CATEGORÍAS ---
+  $all_categories = find_by_sql("SELECT id, name FROM categories");
+
+  // --- CONSTRUIR CONSULTA ---
+  $sql = "
     SELECT p.*, c.name AS categorie, m.file_name AS image
     FROM products p
     LEFT JOIN categories c ON c.id = p.categorie_id
     LEFT JOIN media m ON m.id = p.media_id
     WHERE p.status = 'Activo'
-  ");
+  ";
+
+  if ($search_brand != '') {
+    $sql .= " AND p.brand LIKE '%{$search_brand}%'";
+  }
+
+  if ($search_model != '') {
+    $sql .= " AND p.model LIKE '%{$search_model}%'";
+  }
+
+  if ($search_category != '') {
+    $sql .= " AND c.name = '{$search_category}'";
+  }
+
+  $products = find_by_sql($sql);
 ?>
 <?php include_once('layouts/header.php'); ?>
+
+
 
 <div class="row">
   <div class="col-md-12">
@@ -24,6 +48,49 @@
   <div class="col-md-12">
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
+      <?php
+// Capturar filtros
+$search_brand = isset($_GET['brand']) ? remove_junk($db->escape($_GET['brand'])) : '';
+$search_model = isset($_GET['model']) ? remove_junk($db->escape($_GET['model'])) : '';
+$search_category = isset($_GET['category']) ? remove_junk($db->escape($_GET['category'])) : '';
+
+// Traer categorías dinámicamente
+$all_categories = find_by_sql("SELECT id, name FROM categories");
+  ?>
+  <form method="GET" action="product.php" class="clearfix" style="margin-bottom: 15px;">
+    <div class="row">
+      
+      <div class="col-md-3">
+        <input type="text" name="brand" class="form-control"
+              placeholder="Buscar por marca..."
+              value="<?php echo $search_brand; ?>">
+      </div>
+
+      <div class="col-md-3">
+        <input type="text" name="model" class="form-control"
+              placeholder="Buscar por modelo..."
+              value="<?php echo $search_model; ?>">
+      </div>
+
+      <div class="col-md-3">
+        <select name="category" class="form-control">
+          <option value="">Todas las categorías</option>
+          <?php foreach ($all_categories as $cat): ?>
+            <option value="<?php echo $cat['name']; ?>"
+              <?php if ($search_category == $cat['name']) echo "selected"; ?>>
+              <?php echo strtoupper($cat['name']); ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary btn-block">Buscar</button>
+      </div>
+
+    </div>
+  </form>
+
         <th>Lista de productos</th>
         <div class="pull-right">
           <a href="add_product.php" class="btn btn-primary">Agregar producto</a>
