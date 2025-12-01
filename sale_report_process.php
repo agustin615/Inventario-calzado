@@ -108,10 +108,11 @@ foreach ($ventas as $venta_id => $items) {
             <td>".($p['color'] ?? 'N/A')."</td>
             <td>".($p['size'] ?? 'N/A')."</td>
             <td>{$p['cantidad']}</td>
-            <td>$ {$p['precio_unitario']}</td>
-            <td>$ {$p['total_producto']}</td>
+            <td>$ ".number_format($p['precio_unitario'], 0, '', '.')."</td>
+            <td>$ ".number_format($p['total_producto'], 0, '', '.')."</td>
         </tr>
         ";
+
     }
 
     $html .= "
@@ -119,7 +120,8 @@ foreach ($ventas as $venta_id => $items) {
         <tfoot>
             <tr>
                 <td colspan='6' style='text-align:right;'><strong>Total venta:</strong></td>
-                <td><strong>$ {$total_venta}</strong></td>
+                <td><strong>$ ".number_format($total_venta, 0, '', '.')."</strong></td>
+
             </tr>
         </tfoot>
     </table>
@@ -128,7 +130,8 @@ foreach ($ventas as $venta_id => $items) {
 }
 
 $html .= "
-<h2>Total General: $ {$total_general}</h2>
+<h2>Total General: $ ".number_format($total_general, 0, '', '.')."</h2>
+
 </body>
 </html>
 ";

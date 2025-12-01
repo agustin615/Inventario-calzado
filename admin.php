@@ -74,13 +74,12 @@ $ultimas_ventas = find_last_sales_full('5');
     </div>
 </div>
 
-
 <div class="row">
   <!-- PRODUCTOS MÁS VENDIDOS -->
-  <div class="col-md-6">   <!-- AUMENTO A 6 -->
+  <div class="col-md-6">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <strong><span class="glyphicon glyphicon-th"></span> Productos más vendidos</strong>
+        <strong><span class="glyphicon glyphicon-th"></span> Productos más vendidos este año</strong>
       </div>
       <div class="panel-body">
         <table class="table table-striped table-bordered table-condensed">
@@ -89,7 +88,7 @@ $ultimas_ventas = find_last_sales_full('5');
               <th>Producto - Modelo</th>
               <th>Categoría</th>
               <th>Cantidades del producto vendidas</th>
-              <th>Total de cantidad de producto vendido</th>
+              <th>Total ingreso por venta</th>
             </tr>
           </thead>
           <tbody>
@@ -98,7 +97,10 @@ $ultimas_ventas = find_last_sales_full('5');
                 <td><?php echo isset($product_sold['name']) ? remove_junk(first_character($product_sold['name'])) : 'Producto sin nombre'; ?></td>
                 <td><?php echo remove_junk(first_character($product_sold['category_name'] ?? 'Sin categoría')); ?></td>
                 <td class="text-center"><?php echo (int)$product_sold['totalQty']; ?></td>
-                <td class="text-center"><?php echo (int)$product_sold['totalSold']; ?></td>
+
+                <!-- TOTAL INGRESO FORMATEADO -->
+                <td class="text-center">$<?php echo number_format($product_sold['totalSold'], 0, '', '.'); ?></td>
+
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -108,7 +110,7 @@ $ultimas_ventas = find_last_sales_full('5');
   </div>
 
   <!-- PRODUCTOS RECIENTES -->
-  <div class="col-md-6">   <!-- AUMENTO A 6 -->
+  <div class="col-md-6">
     <div class="panel panel-default">
       <div class="panel-heading">
         <strong><span class="glyphicon glyphicon-th"></span> Los últimos 5 productos añadidos</strong>
@@ -118,16 +120,22 @@ $ultimas_ventas = find_last_sales_full('5');
           <?php foreach ($recent_products as $recent_product): ?>
             <a class="list-group-item clearfix" href="edit_product.php?id=<?php echo (int)$recent_product['id']; ?>">
               <h4 class="list-group-item-heading">
+
                 <?php if (!isset($recent_product['media_id']) || $recent_product['media_id'] == 0): ?>
                   <img class="img-avatar img-circle" src="uploads/products/no_image.jpg" alt="">
                 <?php else: ?>
                   <img class="img-avatar img-circle" src="uploads/products/<?php echo $recent_product['image'] ?? 'no_image.jpg'; ?>" alt="">
                 <?php endif; ?>
+
                 <?php echo remove_junk(first_character(($recent_product['brand'] ?? 'Sin marca') . " " . ($recent_product['model'] ?? 'Sin modelo'))); ?>
+
+                <!-- PRECIO VENTA FORMATEADO -->
                 <span class="label label-warning pull-right">
-                  $<?php echo (int)$recent_product['sale_price']; ?>
+                  $<?php echo number_format($recent_product['sale_price'], 0, '', '.'); ?>
                 </span>
+
               </h4>
+
               <span class="list-group-item-text pull-right">
                 <?php echo remove_junk(first_character($recent_product['categorie'] ?? 'Sin categoría')); ?>
               </span>
@@ -141,8 +149,8 @@ $ultimas_ventas = find_last_sales_full('5');
 </div>
 
 
-  <!-- Ultimas ventas --> 
 
+<!-- ULTIMAS VENTAS -->
 <div class="panel panel-default">
   <div class="panel-heading">
     <strong>
@@ -177,15 +185,21 @@ $ultimas_ventas = find_last_sales_full('5');
                 <td><?php echo $item['name']; ?></td>
                 <td><?php echo $item['category']; ?></td>
                 <td><?php echo $item['cantidad']; ?></td>
-                <td><?php echo $item['precio']; ?></td>
-                <td><?php echo $item['subtotal']; ?></td>
+
+                <!-- PRECIO UNITARIO FORMATEADO -->
+                <td>$<?php echo number_format($item['precio'], 0, '', '.'); ?></td>
+
+                <!-- SUBTOTAL FORMATEADO -->
+                <td>$<?php echo number_format($item['subtotal'], 0, '', '.'); ?></td>
+
               </tr>
             <?php endforeach; ?>
             </tbody>
           </table>
 
           <h4 class="text-right">
-            Total de la venta: <strong>$<?php echo number_format($venta['total'], 0, ',', '.'); ?></strong>
+            Total de la venta: 
+            <strong>$<?php echo number_format($venta['total'], 0, '', '.'); ?></strong>
           </h4>
         </div>
 
