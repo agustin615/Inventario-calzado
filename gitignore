@@ -1,0 +1,10 @@
+# Basura del sistema
+.DS_Store
+Thumbs.db
+
+# Configuración local (copiar desde config.example.php)
+includes/config.php
+
+# Editores
+.vscode/
+.idea/

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 25-11-2025 a las 22:48:03
+-- Tiempo de generación: 05-11-2026 a las 23:08:16
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -39,6 +39,7 @@ CREATE TABLE `categories` (
 INSERT INTO `categories` (`id`, `name`) VALUES
 (6, 'botas'),
 (4, 'calcetines'),
+(10, 'CHALAS'),
 (3, 'zapatillas'),
 (5, 'zapatos');
 
@@ -63,7 +64,6 @@ CREATE TABLE `detalle_venta` (
 
 INSERT INTO `detalle_venta` (`id`, `venta_id`, `producto_id`, `variant_id`, `cantidad`, `precio_unitario`) VALUES
 (72, 72, 11, 13, 5, 2000.00),
-(73, 72, 16, 32, 1, 4000.00),
 (74, 73, 19, 30, 4, 3000.00),
 (75, 73, 22, 35, 2, 45000.00),
 (76, 73, 23, 37, 1, 10000.00),
@@ -127,9 +127,9 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `brand`, `model`, `buy_price`, `sale_price`, `categorie_id`, `media_id`, `date`, `estado`, `status`) VALUES
-(11, 'ADIDAS', 'CASUAL', 1000.00, 2000.00, 3, 5, '2025-10-21 21:11:19', 1, 'Activo'),
+(11, 'ADIDAS', 'CASUAL', 1000.00, 2000.00, 3, 5, '2025-10-21 21:11:19', 0, 'Descontinuado'),
 (16, 'ZARA', 'MODA', 3500.00, 4000.00, 6, 10, '2025-11-11 17:59:47', 0, 'Descontinuado'),
-(17, 'NIKE', 'AIRS', 15000.00, 30000.00, 3, 4, '2025-11-19 13:41:44', 1, 'Activo'),
+(17, 'NIKE', 'AIRS', 15000.00, 30000.00, 3, 4, '2025-11-19 13:41:44', 0, 'Descontinuado'),
 (19, 'GENERICO', 'CASUAL', 2000.00, 3000.00, 4, 8, '2025-11-19 13:44:09', 1, 'Activo'),
 (21, 'GEOXS', 'FORMAL', 45000.00, 60000.00, 5, 6, '2025-11-21 16:01:15', 1, 'Activo'),
 (22, 'NIKE', 'FITNESS', 30000.00, 45000.00, 3, 12, '2025-11-22 13:56:21', 1, 'Activo'),
@@ -160,7 +160,7 @@ INSERT INTO `product_variants` (`id`, `product_id`, `color`, `size`, `stock`) VA
 (26, 17, 'BLANCO', '34', 10),
 (27, 17, 'ROJO', '43', 10),
 (30, 19, 'BLANCO', 'S', 10),
-(32, 16, 'ROJO', '22', 44),
+(32, 16, 'ROJO', '22', 45),
 (33, 21, 'NEGRO', '34', 11),
 (34, 21, 'CAFE', '40', 10),
 (35, 22, 'NEGRO', '40', 27),
@@ -183,8 +183,8 @@ CREATE TABLE `sales` (
 --
 
 INSERT INTO `sales` (`id`, `date`) VALUES
-(72, '2025-11-07 14:00:00'),
-(73, '2025-11-22 16:04:54'),
+(72, '2025-11-08 14:00:00'),
+(73, '2025-11-12 16:04:00'),
 (74, '2025-11-22 16:05:02'),
 (75, '2025-11-23 15:20:23'),
 (76, '2025-11-25 18:01:28'),
@@ -212,7 +212,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `username`, `password`, `user_level`, `image`, `status`, `last_login`) VALUES
-(1, 'Admin Admin', 'Admin', 'd033e22ae348aeb5660fc2140aec35850c4da997', 1, 'siz4lkk1.png', 1, '2025-11-25 16:25:27'),
+(1, 'Admin Admin', 'Admin', 'd033e22ae348aeb5660fc2140aec35850c4da997', 1, 'siz4lkk1.png', 1, '2026-11-05 19:07:39'),
 (10, 'Prueba Prueba', 'Prueba', '711383a59fda05336fd2ccf70c8059d1523eb41a', 3, 'eh4vowee10.jpg', 1, '2021-07-27 03:08:58');
 
 -- --------------------------------------------------------
@@ -307,7 +307,7 @@ ALTER TABLE `user_groups`
 -- AUTO_INCREMENT de la tabla `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `detalle_venta`
